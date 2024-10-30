@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments Transaction Table</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #121212; /* Dark background */
+            color: #e0e0e0; /* Light text color */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333; /* Darker border */
+        }
+        th {
+            background-color: #1e1e1e; /* Darker header background */
+            color: #f4f4f4; /* Light header text */
+        }
+        tr:nth-child(even) {
+            background-color: #1a1a1a; /* Darker background for even rows */
+        }
+        tr:hover {
+            background-color: #333; /* Highlight row on hover */
+        }
+        .approved, .rejected {
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 10px;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .approved {
+            background-color: #28a745; /* Green */
+        }
+        .rejected {
+            background-color: #dc3545; /* Red */
+        }
+        .approved:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+        .rejected:hover {
+            background-color: #c82333; /* Darker red on hover */
+        }
+        /* New styles for disabled buttons */
+        .disabled-action {
+            background-color: #555555 !important; /* Lighter gray color */
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .account {
+            font-weight: bold;
+            color: #e0e0e0; /* Light color for account numbers */
+        }
+        .amount {
+            color: #ffffff; /* White color for amount */
+        }
+        .action-icons {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Payments Transactions Request</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>S No.</th>
+                <th>Player ID</th>
+                <th>Amount</th>
+                <th>UTR No.</th>
+                <th>Time</th>
+                <th>Action</th> <!-- Added Action header -->
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows will be dynamically populated here -->
+        </tbody>
+    </table>
+
+    <script>
+      // Function to update the status of a payment
+      function updatePaymentStatus(id, status, amount) {
+          fetch(`/updatestatus?id=${id}&status=${status}&amount=${amount}`)
+              .then(response => {
+                  if (!response.ok) {
+                      throw new Error('Network response was not ok ' + response.statusText);
+                  }
+                  return response.json();
+              })
+              .then(result => {
+                  console.log(result.message); // Log success message
+                  // Optionally, update the UI to reflect the change in status
+              })
+              .catch(error => {
+                  console.error('Error updating status:', error);
+              });
+      }
+  
+      // JavaScript to call API and update the table
+      fetch('/confirmpayment')
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error('Network response was not ok ' + response.statusText);
+              }
+              return response.json();
+          })
+          .then(data => {
+              const tableBody = document.querySelector('tbody');
+              tableBody.innerHTML = ''; // Clear existing rows
+  
+              data.forEach((item, index) => {
+                  const isPending = item.status === 'pending'; // Check if the status is 'pending'
+
+                  const row = document.createElement('tr');
+                  row.innerHTML = `
+                      <td>${index + 1}</td>
+                      <td class="account">${item.playerId}</td>
+                      <td class="amount">${item.amount}</td>
+                      <td>${item.utr}</td>
+                      <td>${item.time}</td>
+                      <td>
+                          <div class="action-icons">
+                              <button class="approved ${isPending ? '' : 'disabled-action'}" 
+                                  data-id="${item.playerId}" data-amount="${item.amount}" 
+                                  title="Approve" ${isPending ? '' : 'disabled'}>
+                                  <i class="fas fa-check"></i>
+                              </button>
+                              <button class="rejected ${isPending ? '' : 'disabled-action'}" 
+                                  data-id="${item.playerId}" data-amount="${item.amount}" 
+                                  title="Reject" ${isPending ? '' : 'disabled'}>
+                                  <i class="fas fa-trash"></i>
+                              </button>
+                          </div>
+                      </td>
+                  `;
+                  tableBody.appendChild(row);
+              });
+  
+              // Add event listeners for approve/reject buttons
+              document.querySelectorAll('.approved').forEach(button => {
+                  button.addEventListener('click', function () {
+                      if (this.classList.contains('disabled-action')) return; // Skip if disabled
+
+                      const playerId = this.getAttribute('data-id');
+                      const amount = this.getAttribute('data-amount');
+                      updatePaymentStatus(playerId, 'approved', amount); // Pass amount when updating status
+
+                      // Optionally remove the row or update UI here
+                      this.closest('tr').remove(); // Remove row on approval
+                  });
+              });
+  
+              document.querySelectorAll('.rejected').forEach(button => {
+                  button.addEventListener('click', function () {
+                      if (this.classList.contains('disabled-action')) return; // Skip if disabled
+
+                      const playerId = this.getAttribute('data-id');
+                      const amount = this.getAttribute('data-amount');
+                      updatePaymentStatus(playerId, 'rejected', amount); // Pass amount when updating status
+
+                      // Optionally remove the row or update UI here
+                      this.closest('tr').remove(); // Remove row on rejection
+                  });
+              });
+          })
+          .catch(error => {
+              console.error('Error fetching data:', error);
+          });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!-- payment.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boost Now!!</title>
+    <style>
+        body {
+            background-color: #f4f4f9;
+            /* Light gray background for a clean look */
+            color: #333;
+            /* Dark text for readability */
+            font-family: "Roboto", sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #0056b3;
+            /* Professional blue title */
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .payment-info {
+            background-color: #ffffff;
+            color: #333;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            /* Soft shadow for subtle depth */
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .payment-info img {
+            width: 180px;
+            /* QR code size */
+            height: auto;
+            margin: 20px 0;
+        }
+
+        .payment-info input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            /* Light gray border */
+            border-radius: 8px;
+            font-size: 1.1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .payment-info input:focus {
+            border-color: #0056b3;
+            /* Blue border on focus */
+            outline: none;
+        }
+
+        .payment-info button {
+            background-color: #0056b3;
+            /* Professional blue */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .payment-info button:hover {
+            background-color: #003d80;
+            /* Darker blue on hover */
+        }
+
+        .upi-apps img {
+            width: 50px;
+            margin: 10px;
+        }
+
+        .upi-apps {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Complete Your Payment</h1>
+    <div class="payment-info">
+        <p><strong>Payment Amount:</strong> ₹<%= amount %>
+        </p>
+        <p>
+            <strong>Player ID:</strong>
+            <%= id %>
+        </p>
+        <p>
+            Scan the QR code below using any UPI app to proceed with the payment:
+        </p>
+        <img src="<%= qrdata %>" alt="UPI QR Code" />
+        <div class="upi-apps">
+            <p>Supported UPI Apps:</p>
+            <img src="phone pay image link"
+                alt="PhonePe" />
+            <img src="google pay image link"
+                alt="Google Pay" />
+            <img src="bhim image link" alt="BHIM" />
+            <img src="paytm image link"
+                alt="Paytm" />
+        </div>
+        <input type="text" id="idNumber" name="idNumber" placeholder="Enter Player Id" />
+        <input type="text" id="utrNumber" name="utrNumber" placeholder="Enter UTR Number" />
+        <button id="payButton">Pay Now</button>
+    </div>
+    <script>
+        // Retrieve the Player ID from the server-side code and set it to the input field
+        const playerId = "<%= id %>"; // Make sure to use quotes for proper string assignment
+        console.log(`Player ID: ${playerId}`);
+        
+        document.getElementById('idNumber').value = playerId;
+        console.log(`ID Number set in input: ${document.getElementById('idNumber').value}`);
+    </script>
+    <script>
+        document
+            .getElementById("payButton")
+            .addEventListener("click", function () {
+                // Get the values from the input fields
+                const idNumber = document.getElementById("idNumber").value;
+                const utrNumber = document.getElementById("utrNumber").value;
+
+                // Validate inputs
+                if (!idNumber || !utrNumber) {
+                    alert("Both ID Number and UTR Number are required."); // User feedback on validation failure
+                    return; // Stop the function if validation fails
+                }
+                // Function to get the current date and time as a formatted string
+                function getCurrentDateTimeString() {
+                    const now = new Date(); // Get the current date and time
+                    // Extract individual components
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+                    const day = String(now.getDate()).padStart(2, "0");
+                    const hours = String(now.getHours()).padStart(2, "0");
+                    const minutes = String(now.getMinutes()).padStart(2, "0");
+                    const seconds = String(now.getSeconds()).padStart(2, "0");
+
+                    // Format the date and time as YYYY-MM-DD HH:MM:SS
+                    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`; // Return the formatted string
+                }
+                // Assuming amount is defined and safely accessible, you should replace <%= amount %> with a variable
+                const amount = 100; // Define your amount here or get it from another source
+                // Data to send in the request body
+                const data = {
+                    amount: amount, // Use the defined amount
+                    idNumber: idNumber,
+                    utrNumber: utrNumber,
+                    time: getCurrentDateTimeString(),
+                };
+                // Log the data to be sent for debugging purposes
+                // console.log("Data to send:", data);
+                // POST request to localhost:3000
+                fetch("/payment", {
+                    method: "POST", // Specify the request method as POST
+                    headers: {
+                        "Content-Type": "application/json", // Specify that you're sending JSON
+                    },
+                    body: JSON.stringify(data), // Convert the data object to a JSON string
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+
+
+
+                        return response.json();
+                    })
+                    .then((result) => {
+
+
+
+
+
+
+
+                        alert("Payment Successful! It will be reflected in your account soon");
+                        window.location.href = 'return url';
+                    })
+                    .catch((error) => {
+                        // Handle errors
+                        // console.error("Error:", error);
+                        alert(
+                            "Payment failed. Please try again. Money will be refunded soon!!"
+                        ); // User feedback on failure
+                        // Redirects to a new URL
+                        window.location.href = 'return url';
+                    });
+            });
+    </script>
+</body>
+
+</html>
